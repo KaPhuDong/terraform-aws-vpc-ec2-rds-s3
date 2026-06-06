@@ -1,0 +1,27 @@
+#!/bin/bash
+set -euxo pipefail
+
+dnf update -y
+dnf install -y httpd
+
+systemctl enable httpd
+systemctl start httpd
+
+cat > /var/www/html/index.html <<HTML
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>W8 Mon AWS Lab</title>
+  </head>
+  <body>
+    <h1>W8 Mon AWS Lab</h1>
+    <p>Web server is running on EC2 in a public subnet.</p>
+    <ul>
+      <li>S3 static assets bucket: ${bucket_name}</li>
+      <li>RDS MySQL endpoint: ${db_endpoint}</li>
+      <li>Database name: ${db_name}</li>
+    </ul>
+  </body>
+</html>
+HTML
