@@ -39,7 +39,7 @@ module "vpc" {
 
 resource "aws_security_group" "web" {
   name        = "${var.name_prefix}-web-sg"
-  description = "Allow HTTP and SSH to web server"
+  description = "Allow HTTP and optional SSH to web server"
   vpc_id      = module.vpc.vpc_id
 
   ingress {
@@ -50,12 +50,16 @@ resource "aws_security_group" "web" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    description = "SSH for lab access"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [var.allowed_ssh_cidr]
+  dynamic "ingress" {
+    for_each = var.allowed_ssh_cidr == null ? [] : [var.allowed_ssh_cidr]
+
+    content {
+      description = "SSH for lab access"
+      from_port   = 22
+      to_port     = 22
+      protocol    = "tcp"
+      cidr_blocks = [ingress.value]
+    }
   }
 
   egress {
@@ -110,6 +114,16 @@ resource "aws_s3_bucket_versioning" "static_assets" {
 
   versioning_configuration {
     status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "static_assets" {
+  bucket = aws_s3_bucket.static_assets.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
   }
 }
 

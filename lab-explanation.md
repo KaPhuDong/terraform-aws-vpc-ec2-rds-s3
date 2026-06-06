@@ -48,7 +48,7 @@ Trong kiến trúc này:
 Thư mục chính của lab:
 
 ```text
-cloud/w8/mon/vpc-ec2-rds-s3-lab/
+terraform-aws-vpc-ec2-rds-s3-push/
 ```
 
 Các file chính:
@@ -110,7 +110,7 @@ EC2 được cấu hình:
 Security Group của web server cho phép:
 
 - HTTP port `80` từ Internet.
-- SSH port `22` từ CIDR cấu hình trong biến `allowed_ssh_cidr`.
+- SSH port `22` chỉ được mở nếu cấu hình biến `allowed_ssh_cidr`.
 - Outbound traffic ra ngoài.
 
 ## 6. Bước 3: Triển khai RDS MySQL trong private subnet
@@ -176,7 +176,7 @@ resource "aws_security_group" "web"
 Cho phép:
 
 - Inbound HTTP port `80` từ `0.0.0.0/0`.
-- Inbound SSH port `22` từ biến `allowed_ssh_cidr`.
+- Inbound SSH port `22` chỉ được tạo khi biến `allowed_ssh_cidr` khác `null`.
 - Outbound tất cả traffic.
 
 ### Database Security Group
@@ -241,7 +241,7 @@ Sau khi chạy bootstrap xong, lấy output để tạo file `backend.hcl`, rồ
 ### Bước 1: Bootstrap remote backend
 
 ```powershell
-cd cloud/w8/mon/vpc-ec2-rds-s3-lab/bootstrap-backend
+cd bootstrap-backend
 terraform init
 terraform apply
 ```
@@ -294,7 +294,7 @@ Cần destroy theo đúng thứ tự:
 ### Bước 1: Destroy application stack
 
 ```powershell
-cd cloud/w8/mon/vpc-ec2-rds-s3-lab
+cd ..
 terraform destroy
 ```
 
