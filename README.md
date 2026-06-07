@@ -173,14 +173,11 @@ Sau khi apply xong, lấy output:
 - `lock_table`
 - `backend_config`
 
-Ảnh minh chứng nên chèn:
+Minh chứng:
 
-- Title: `Backend bootstrap apply success`
-- Description: Terminal hiển thị `terraform apply` thành công trong thư mục `bootstrap-backend`.
-- Title: `S3 state bucket created`
-- Description: AWS Console hiển thị S3 bucket dùng để lưu Terraform state.
-- Title: `DynamoDB lock table created`
-- Description: AWS Console hiển thị DynamoDB table có partition key `LockID`.
+![Terraform init trong bootstrap backend](imgs/step-1.1.png)
+
+![Terraform apply bootstrap backend thành công](imgs/step-1.2.png)
 
 ### Step 2: Tạo backend.hcl
 
@@ -201,10 +198,9 @@ dynamodb_table = "your-bootstrap-lock-table"
 encrypt        = true
 ```
 
-Ảnh minh chứng nên chèn:
+Minh chứng:
 
-- Title: `Backend configuration file`
-- Description: Nội dung `backend.hcl` đã dùng bucket và DynamoDB table từ bootstrap output.
+![Cấu hình backend.hcl dùng S3 bucket và DynamoDB lock table](imgs/step-2.png)
 
 ### Step 3: Init root module với S3 backend
 
@@ -212,10 +208,9 @@ encrypt        = true
 terraform init -backend-config=backend.hcl
 ```
 
-Ảnh minh chứng nên chèn:
+Minh chứng:
 
-- Title: `Terraform initialized with S3 backend`
-- Description: Terminal hiển thị Terraform init thành công và dùng S3 backend.
+![Terraform init root module với S3 backend thành công](imgs/step-3.png)
 
 ### Step 4: Validate và review plan
 
@@ -224,12 +219,11 @@ terraform validate
 terraform plan
 ```
 
-Ảnh minh chứng nên chèn:
+Minh chứng:
 
-- Title: `Terraform validate success`
-- Description: Terminal hiển thị cấu hình Terraform hợp lệ.
-- Title: `Terraform plan summary`
-- Description: Terminal hiển thị danh sách resources sẽ được tạo: VPC, subnets, EC2, RDS, S3, security groups, IAM.
+![Terraform validate thành công](imgs/step-4.1.png)
+
+![Terraform plan hiển thị 26 resources sẽ được tạo](imgs/step-4.2.png)
 
 ### Step 5: Apply infrastructure
 
@@ -237,10 +231,9 @@ terraform plan
 terraform apply
 ```
 
-Ảnh minh chứng nên chèn:
+Minh chứng:
 
-- Title: `Terraform apply complete`
-- Description: Terminal hiển thị apply thành công và các output như `web_url`, `web_public_ip`, `rds_endpoint`, `static_assets_bucket`.
+![Terraform apply hoàn tất và hiển thị outputs](imgs/step-5.png)
 
 ### Step 6: Test web server
 
@@ -252,24 +245,29 @@ terraform output web_url
 
 Mở URL trên browser để kiểm tra EC2 web server trả về trang Apache được tạo bởi user data.
 
-Ảnh minh chứng nên chèn:
+Minh chứng:
 
-- Title: `Web app running on EC2`
-- Description: Browser truy cập `web_url` và hiển thị trang web có thông tin S3 bucket, RDS endpoint, database name.
-- Title: `EC2 instance in public subnet`
-- Description: AWS Console hiển thị EC2 instance đang running, có public IPv4/DNS và subnet thuộc public tier.
+![Web app chạy trên EC2 public URL](imgs/step-6.png)
 
-## 6. Bằng chứng theo từng yêu cầu final project
+## 6. Checklist kiểm tra yêu cầu project
 
-| Yêu cầu                               | Trạng thái | Bằng chứng nên chèn                                                                  |
-| ------------------------------------- | ---------- | ------------------------------------------------------------------------------------ |
-| VPC + Public/Private Subnets          | Done       | AWS VPC Console hiển thị VPC, 2 public subnets, 2 private subnets                    |
-| EC2 in public subnet                  | Done       | EC2 Console hiển thị instance running, có public IP, subnet public                   |
-| RDS MySQL in private subnet           | Done       | RDS Console hiển thị DB MySQL, subnet group dùng private subnets, Public access = No |
-| S3 bucket for static assets           | Done       | S3 Console hiển thị bucket static assets, versioning/encryption/public access block  |
-| Security groups only required traffic | Done       | Web SG mở HTTP 80; DB SG chỉ mở MySQL 3306 từ Web SG                                 |
-| State stored in S3 backend            | Done       | S3 backend bucket có Terraform state file theo key đã cấu hình                       |
-| DynamoDB locking                      | Done       | DynamoDB lock table tồn tại với key `LockID`                                         |
+Kết luận: project đã đáp ứng các yêu cầu chính của final project.
+
+- [x] Tạo VPC bằng Terraform module riêng trong `modules/vpc`.
+- [x] Tạo public subnets và private subnets cho kiến trúc web app.
+- [x] Cấu hình Internet Gateway và public route table để public subnet truy cập Internet.
+- [x] Triển khai EC2 web server trong public subnet.
+- [x] EC2 có public IP và web app truy cập được qua HTTP port `80`.
+- [x] Triển khai RDS MySQL trong private subnets thông qua DB subnet group.
+- [x] RDS không public ra Internet với `publicly_accessible = false`.
+- [x] Tạo S3 bucket cho static assets, có versioning, encryption và block public access.
+- [x] Gán IAM role/policy để EC2 có quyền truy cập S3 static assets bucket.
+- [x] Cấu hình security group chỉ mở traffic cần thiết: HTTP `80` cho web và MySQL `3306` từ EC2 sang RDS.
+- [x] Tắt SSH mặc định; chỉ mở SSH khi cấu hình `allowed_ssh_cidr` rõ ràng.
+- [x] Lưu Terraform state bằng S3 backend.
+- [x] Dùng DynamoDB table để lock Terraform state.
+- [x] Có output kiểm tra kết quả triển khai: `web_url`, `web_public_ip`, `rds_endpoint`, `static_assets_bucket`.
+- [x] Có ảnh minh chứng cho các bước bootstrap, init backend, validate, plan, apply và test web server ở phần 5.
 
 ## 7. Security notes
 
